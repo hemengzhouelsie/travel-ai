@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "folders": {
+    "female": {
+      "jacket": ["jacket_01.jpeg", "jacket_02.jpeg", "jacket_03.jpeg", "jacket_04.jpeg"],
+      "top": ["top_01.jpeg", "top_02.jpeg", "top_03.jpeg", "top_04.jpeg", "top_05.jpeg"],
+      "bottom": ["bot_01.jpeg", "bot_02.jpeg", "bot_03.jpeg", "bot_04.jpeg", "bot_05.jpeg", "bot_06.jpeg", "bot_07.jpeg", "dress_01.jpeg", "dress_02.jpeg", "dress_03.jpeg", "dress_04.jpeg"],
+      "bag": ["bag_01.jpeg", "bag_02.jpeg", "bag_03.jpeg", "bag_04.jpeg", "bag_05.jpeg"],
+      "shoes": ["shoe_01.jpeg", "shoe_02.jpeg", "shoe_03.jpeg", "shoe_04.jpeg", "shoe_05.jpeg", "shoe_06.jpeg"]
+    },
+    "male": {
+      "jacket": [],
+      "top": [],
+      "bottom": [],
+      "bag": [],
+      "shoes": []
+    },
+    "unisex": {
+      "jacket": [],
+      "top": [],
+      "bottom": [],
+      "bag": [],
+      "shoes": []
+    }
+  }
+}
+
+  
