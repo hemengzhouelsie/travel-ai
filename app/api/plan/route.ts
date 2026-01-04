@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 
 /**
- * ⚠️ 非常重要：
- * 强制使用 Node.js runtime，避免 Edge 环境行为不一致
+ * 强制使用 Node.js runtime，确保稳定性
  */
 export const runtime = "nodejs";
 
@@ -28,40 +27,15 @@ export async function POST(req: Request) {
       );
     }
 
-    /**
-     * 🧨 如果你还能看到旧的 gemini-1.5-flash-latest 报错，
-     * 说明你请求根本没打到这份代码
-     */
+    // 使用已经确认跑通的 Gemini 2.0 路径
     const model = "gemini-2.0-flash";
     const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-    /**
-     * 🔎 调试标记：先直接返回，确认命中这份代码
-     * —— 第一次测试一定要保留！
-     */
-    return NextResponse.json(
-      {
-        ok: true,
-        marker: "HIT_NEW_ROUTE_2026-01-05",
-        model,
-        targetUrl,
-        receivedBody: body,
-      },
-      { headers: corsHeaders }
-    );
+    // 1. 构建 Prompt
+    const prompt = `你是旅行规划助手。请为 ${body.city} 生成 ${body.days} 天详细游玩行程和每日穿搭主题。
+    要求：输出中文，结构清晰。包含景点名称、活动建议和穿搭推荐。`;
 
-    /**
-     * ⬇️⬇️⬇️
-     * ⬇️⬇️⬇️
-     * 确认 marker 正确后，把上面的 return 删掉，
-     * 再启用下面的真实 Gemini 调用
-     * ⬇️⬇️⬇️
-     * ⬇️⬇️⬇️
-     */
-
-    /*
-    const prompt = `你是旅行规划助手。请为 ${body.city} 生成 ${body.days} 天游玩行程和每日穿搭主题，输出中文。`;
-
+    // 2. 正式调用 Gemini API
     const geminiRes = await fetch(targetUrl, {
       method: "POST",
       headers: {
@@ -74,37 +48,49 @@ export async function POST(req: Request) {
             parts: [{ text: prompt }],
           },
         ],
+        generationConfig: {
+          temperature: 0.7,
+        }
       }),
     });
 
     const geminiText = await geminiRes.text();
 
+    // 3. 错误处理
     if (!geminiRes.ok) {
       return NextResponse.json(
         {
           error: "GEMINI_CALL_FAILED",
           status: geminiRes.status,
           detail: geminiText,
-          attemptedUrl: targetUrl,
         },
         { status: geminiRes.status, headers: corsHeaders }
       );
     }
 
+    // 4. 解析 AI 返回内容
     const geminiJson = JSON.parse(geminiText);
     const aiText =
-      geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text ??
-      "未生成内容";
+      geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text ?? "未生成内容";
 
+    /**
+     * 5. ✅ 关键修复：返回前端预期的数据结构
+     * 确保包含了 days 等前端渲染必须读取的字段
+     */
     return NextResponse.json(
       {
         ok: true,
         ai_text: aiText,
+        // 下面是补充给前端的元数据，防止渲染时 undefined 报错
+        city: body.city,
+        days: body.days,
+        date_start: body.date_start,
       },
       { headers: corsHeaders }
     );
-    */
+
   } catch (err: any) {
+    console.error("API Route Error:", err);
     return NextResponse.json(
       {
         error: "SERVER_ERROR",
