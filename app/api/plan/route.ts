@@ -24,9 +24,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ 修复 1: 使用真实存在的模型名。
+    // 强制使用这个全称，它是 v1beta 路径下最稳的模型 ID
     const model = "gemini-2.0-flash";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
+      apiKey
+    )}`;
+
 
     const tripSchema = {
       type: "object",
@@ -179,3 +182,4 @@ export async function POST(req: Request) {
     );
   }
 }
+
