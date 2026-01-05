@@ -25,8 +25,8 @@ export async function POST(req: Request) {
     }
 
     // ✅ 修复 1: 使用真实存在的模型名。
-    const model = "gemini-1.5-flash-latest"; 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const model = "gemini-2.0-flash";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
     const tripSchema = {
       type: "object",
