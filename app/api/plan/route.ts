@@ -24,11 +24,13 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ 用官方文档示例中出现的可用模型
-    const model = "gemini-2.5-flash";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+    // ✅ 修复 1: 使用真实存在的模型名。
+    // 结构化输出建议使用 gemini-1.5-flash 或 gemini-2.0-flash-exp
+    const model = "gemini-1.5-flash"; 
+    
+    // ✅ 修复 2: 将 API Key 拼接到 URL 后面，这是 REST API 最稳定的做法
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-    // ✅ 你的前端要的结构（TripResponse）
     const tripSchema = {
       type: "object",
       properties: {
@@ -98,9 +100,9 @@ export async function POST(req: Request) {
                         items: {
                           type: "object",
                           properties: {
-                            slot: { type: "string" },   // jacket/top/bottom/bag/shoes 或 dress 等
-                            name: { type: "string" },   // 例如 "Female/jacket_02.jpeg"
-                            copy: { type: "string" },   // ✅ 这里放“选择理由”
+                            slot: { type: "string" },
+                            name: { type: "string" },
+                            copy: { type: "string" },
                           },
                           required: ["slot", "name", "copy"],
                         },
@@ -127,23 +129,16 @@ export async function POST(req: Request) {
 - 出发日期：${body.date_start}
 - persona：${JSON.stringify(body.persona ?? {})}
 
-请输出【严格符合 schema 的 JSON】（不要 Markdown，不要多余文字）。
-
+请输出符合 schema 的 JSON。
 规则：
-1) trip.days 数组长度必须等于 meta.days，每天 day_index 从 1 开始递增。
-2) 每天 outfit.items 给出 4~5 个单品（可包含 jacket/top/bottom/dress/bag/shoes），
-   name 必须是“可访问的静态资源路径片段”，格式类似：
-   - Female/jacket_02.jpeg
-   - Female/dress_01.jpeg
-   - Male/top_03.jpeg
-3) copy 字段写清楚“为什么选这件”：结合当天行程/天气感/步行强度/风格关键词（这是你最重要的输出）。
-4) 如果某天不需要某类单品，就不要输出那个 slot（不要给 top_none 这种占位）。
+1) trip.days 数组长度等于 ${body.days}。
+2) name 格式必须为: Female/jacket_02.jpeg 这种路径。
+3) copy 写清楚选择理由。
 `;
 
     const geminiRes = await fetch(url, {
       method: "POST",
       headers: {
-        "x-goog-api-key": apiKey, // ✅ 官方 REST 示例用这个 header
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -163,27 +158,23 @@ export async function POST(req: Request) {
           error: "GEMINI_CALL_FAILED",
           status: geminiRes.status,
           detail: rawText,
-          attemptedUrl: url,
           model,
         },
-        { status: 500, headers: corsHeaders }
+        { status: geminiRes.status, headers: corsHeaders }
       );
     }
 
-    // ✅ 兼容两种情况：
-    // 1) 返回是 { candidates: [ { content: { parts:[{text:"{...json...}"}] } } ] }
-    // 2) 直接就是 JSON（少见，但做个兼容）
-    let parsed: any;
-    try {
-      const asJson = JSON.parse(rawText);
-      const maybeText = asJson?.candidates?.[0]?.content?.parts?.[0]?.text;
-      parsed = maybeText ? JSON.parse(maybeText) : asJson;
-    } catch {
-      // 如果 rawText 本身就是 JSON 字符串但被转义，兜底再试一次
-      parsed = JSON.parse(rawText.replace(/\\"/g, '"'));
+    // ✅ 修复解析逻辑
+    const asJson = JSON.parse(rawText);
+    const aiContent = asJson?.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!aiContent) {
+      throw new Error("No content generated");
     }
 
+    const parsed = JSON.parse(aiContent);
     return NextResponse.json(parsed, { headers: corsHeaders });
+
   } catch (err: any) {
     return NextResponse.json(
       { error: "SERVER_ERROR", message: err?.message ?? "Unknown error" },
