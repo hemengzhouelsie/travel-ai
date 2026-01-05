@@ -25,10 +25,7 @@ export async function POST(req: Request) {
     }
 
     // ✅ 修复 1: 使用真实存在的模型名。
-    // 结构化输出建议使用 gemini-1.5-flash 或 gemini-2.0-flash-exp
-    const model = "gemini-1.5-flash"; 
-    
-    // ✅ 修复 2: 将 API Key 拼接到 URL 后面，这是 REST API 最稳定的做法
+    const model = "gemini-1.5-flash-latest"; 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     const tripSchema = {
